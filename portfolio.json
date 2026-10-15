@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "name": "nexus-workbench-alan-vo",
+  "owner": "ALANDVO",
+  "email": "alanvo@gmail.com",
+  "domain": "AI/ML developer tools",
+  "workflows": [
+    "Analyze decompiler output for indirect call patterns",
+    "Resolve vtable function calls to concrete targets",
+    "Recover switch statements from jump tables"
+  ],
+  "auth": "oidc-keycloak-saml-broker",
+  "llm_providers": [
+    "openai-compatible",
+    "anthropic",
+    "gemini",
+    "ollama"
+  ],
+  "summary": "Work in progress: nexus-workbench-alan-vo",
+  "status": "work-in-progress"
+}
