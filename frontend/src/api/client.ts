@@ -1,5 +1,5 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
-import type { Analysis, AnalysisCreate, AnalysisListResponse, AnalysisUpdate, AuthConfig, User } from '../types';
+import type { Analysis, AnalysisCreate, AnalysisListResponse, AnalysisUpdate, AnalysisRunResponse, AuthConfig, User } from '../types';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
@@ -56,6 +56,7 @@ export const analysesApi = {
   create: (data: AnalysisCreate) => api.post<Analysis>('/analyses', data),
   update: (id: number, data: AnalysisUpdate) => api.patch<Analysis>(`/analyses/${id}`, data),
   delete: (id: number) => api.delete(`/analyses/${id}`),
+  run: (id: number) => api.post<AnalysisRunResponse>(`/analyses/${id}/run`),
 };
 
 export default api;

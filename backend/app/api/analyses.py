@@ -10,8 +10,23 @@ from app.api.deps import get_current_active_user, require_role
 from app.core.database import get_db_session
 from app.models.analysis import Analysis, AnalysisStatus, AnalysisType
 from app.models.user import User, UserRole
+from app.services.analysis_service import create_analysis_service
+from app.services.decompiler_engine import AnalysisResult
 
 router = APIRouter(prefix="/analyses", tags=["analyses"])
+
+analysis_service = create_analysis_service()
+
+
+class AnalysisRunResponse(BaseModel):
+    analysis_id: int
+    status: AnalysisStatus
+    functions_count: int
+    vtables_count: int
+    switches_count: int
+    jmp_calls_count: int
+    strings_count: int
+    cross_references_count: int
 
 
 class AnalysisCreate(BaseModel):
@@ -74,6 +89,44 @@ async def create_analysis(
     await db.commit()
     await db.refresh(analysis)
     return analysis
+
+
+@router.post("/{analysis_id}/run", response_model=AnalysisRunResponse)
+async def run_analysis(
+    analysis_id: int,
+    current_user: Annotated[User, Depends(require_role(UserRole.OPERATOR, UserRole.ADMIN))],
+    db: Annotated[AsyncSession, Depends(get_db_session)],
+):
+    result = await db.execute(
+        select(Analysis).where(Analysis.id == analysis_id, Analysis.user_id == current_user.id)
+    )
+    analysis = result.scalar_one_or_none()
+
+    if not analysis:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Analysis not found",
+        )
+
+    if analysis.status == AnalysisStatus.RUNNING:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Analysis is already running",
+        )
+
+    # Run the analysis
+    result_data = await analysis_service.run_analysis(db, analysis)
+
+    return AnalysisRunResponse(
+        analysis_id=analysis.id,
+        status=analysis.status,
+        functions_count=len(result_data.functions),
+        vtables_count=len(result_data.vtables),
+        switches_count=len(result_data.switches),
+        jmp_calls_count=len(result_data.jmp_calls),
+        strings_count=len(result_data.strings),
+        cross_references_count=len(result_data.cross_references),
+    )
 
 
 @router.get("", response_model=AnalysisListResponse)

@@ -1,1 +1,38 @@
-{"name":"nexus-workbench-frontend","version":"1.0.0","type":"module","author":"Alan Vo <alanvo@gmail.com>","scripts":{"dev":"vite","build":"tsc && vite build","preview":"vite preview","test":"vitest run","lint":"eslint . --ext ts,tsx"},"dependencies":{"react":"^18.3.1","react-dom":"^18.3.1","react-router-dom":"^6.26.2","axios":"^1.7.7","keycloak-js":"^26.0.0"},"devDependencies":{"@types/react":"^18.3.10","@types/react-dom":"^18.3.0","@vitejs/plugin-react":"^4.3.1","typescript":"^5.6.2","vite":"^5.4.8","vitest":"^2.1.1","@testing-library/react":"^16.0.1","@testing-library/jest-dom":"^6.5.0","jsdom":"^25.0.0","eslint":"^9.10.0","eslint-plugin-react":"^7.37.1","eslint-plugin-react-hooks":"^5.0.0"}}
+{
+  "name": "nexus-workbench-frontend",
+  "version": "1.0.0",
+  "type": "module",
+  "author": {
+    "name": "Alan Vo",
+    "email": "alanvo@gmail.com",
+    "url": "https://github.com/ALANDVO"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "lint": "eslint . --ext ts,tsx"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.26.2",
+    "axios": "^1.7.7",
+    "keycloak-js": "^26.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.10",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "typescript": "^5.6.2",
+    "vite": "^5.4.8",
+    "vitest": "^2.1.1",
+    "@testing-library/react": "^16.0.1",
+    "@testing-library/jest-dom": "^6.5.0",
+    "jsdom": "^25.0.0",
+    "eslint": "^9.10.0",
+    "eslint-plugin-react": "^7.37.1",
+    "eslint-plugin-react-hooks": "^5.0.0"
+  }
+}

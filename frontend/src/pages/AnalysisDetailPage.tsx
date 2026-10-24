@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { analysesApi } from '../api/client';
-import type { Analysis, AnalysisStatus, AnalysisType, AnalysisUpdate } from '../types';
+import type { Analysis, AnalysisStatus, AnalysisType, AnalysisUpdate, AnalysisRunResponse } from '../types';
 
 const statusLabels: Record<AnalysisStatus, string> = {
   pending: 'Pending',
@@ -24,7 +24,9 @@ export function AnalysisDetailPage() {
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [running, setRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [runResult, setRunResult] = useState<AnalysisRunResponse | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -53,6 +55,22 @@ export function AnalysisDetailPage() {
       setError(detail);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleRun = async () => {
+    if (!id || !analysis) return;
+    setRunning(true);
+    setError(null);
+    try {
+      const response = await analysesApi.run(parseInt(id));
+      setRunResult(response.data);
+      const updated = await analysesApi.get(parseInt(id));
+      setAnalysis(updated.data);
+    } catch (err: any) {
+      setError(err.response?.data?.detail || 'Failed to run analysis');
+    } finally {
+      setRunning(false);
     }
   };
 
@@ -100,7 +118,14 @@ export function AnalysisDetailPage() {
             </p>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+          <button
+            onClick={handleRun}
+            disabled={saving || running || analysis.status === 'running' || analysis.status === 'completed'}
+            className="btn btn-primary"
+          >
+            {running ? 'Running...' : 'Run Analysis'}
+          </button>
           <button
             onClick={() => handleUpdate({ status: analysis.status === 'pending' ? 'running' : 'pending' })}
             disabled={saving}
@@ -155,6 +180,19 @@ export function AnalysisDetailPage() {
               <div>
                 <label style={{ fontSize: '0.75rem', color: 'var(--fg-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Completed</label>
                 <p>{new Date(analysis.completed_at).toLocaleString()}</p>
+              </div>
+            )}
+            {runResult && (
+              <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '1rem', marginTop: '0.5rem' }}>
+                <label style={{ fontSize: '0.75rem', color: 'var(--fg-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Last Run Results</label>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem', fontSize: '0.875rem' }}>
+                  <div><strong>Functions:</strong> {runResult.functions_count}</div>
+                  <div><strong>VTables:</strong> {runResult.vtables_count}</div>
+                  <div><strong>Switches:</strong> {runResult.switches_count}</div>
+                  <div><strong>JMP Calls:</strong> {runResult.jmp_calls_count}</div>
+                  <div><strong>Strings:</strong> {runResult.strings_count}</div>
+                  <div><strong>Cross-refs:</strong> {runResult.cross_references_count}</div>
+                </div>
               </div>
             )}
           </div>
