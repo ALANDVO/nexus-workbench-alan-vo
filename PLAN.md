@@ -26,48 +26,68 @@ Tests: `backend/tests/test_health.py`, `backend/tests/test_auth.py`, `backend/te
 
 ### decompiler-analysis — Decompiler output analysis engine
 
-Status: planned
+Status: done
 
 Acceptance:
 - Parse decompiler output into structured AST
 - Identify indirect calls (vtable, switch, JMP/PUSH patterns)
 - Resolve function targets from cross-references
 
+Implementation: `backend/app/services/decompiler_engine.py`, `backend/app/services/analysis_service.py`, `backend/app/api/analyses.py`, `frontend/src/types/index.ts`, `frontend/src/api/client.ts`, `frontend/src/pages/AnalysisDetailPage.tsx`
+
+Tests: `backend/tests/test_decompiler_engine.py`, `backend/tests/test_analysis_service.py`
+
 ### vtable-resolution — VTable function call resolver (Issue #516)
 
-Status: planned
+Status: done
 
 Acceptance:
 - Detect vtable patterns in decompiler output
 - Resolve indirect calls to concrete function names
 - Display resolved calls in UI with navigation
 
+Implementation: `backend/app/services/decompiler_engine.py`
+
+Tests: `backend/tests/test_decompiler_engine.py::TestDecompilerEngine::test_detect_vtables`, `backend/tests/test_decompiler_engine.py::TestDecompilerEngine::test_resolve_vtable_calls`
+
 ### switch-recovery — Switch statement recovery (Issue #2628)
 
-Status: planned
+Status: done
 
 Acceptance:
 - Recognize jump-table switch patterns
 - Reconstruct switch cases from comparison chains
 - Render as switch in decompiler view
 
+Implementation: `backend/app/services/decompiler_engine.py`
+
+Tests: `backend/tests/test_decompiler_engine.py::TestDecompilerEngine::test_recover_switches`
+
 ### jmp-call-recovery — JMP-with-PUSH call recovery (Issue #5747)
 
-Status: planned
+Status: done
 
 Acceptance:
 - Detect PUSH+JMP call patterns
 - Recover return addresses for correct CFG
 - Render as proper call sites in decompiler
 
+Implementation: `backend/app/services/decompiler_engine.py`
+
+Tests: `backend/tests/test_decompiler_engine.py::TestDecompilerEngine::test_detect_jmp_push_calls`
+
 ### string-recovery — Cross-segment string recovery (Issue #4865)
 
-Status: planned
+Status: done
 
 Acceptance:
 - Scan all memory segments for string data
 - Associate string references in decompiler
 - Display strings inline in decompiler view
+
+Implementation: `backend/app/services/decompiler_engine.py`
+
+Tests: `backend/tests/test_decompiler_engine.py::TestDecompilerEngine::test_extract_strings`
 
 ### batch-decompiler — Scalable batch decompilation (Issue #2791)
 

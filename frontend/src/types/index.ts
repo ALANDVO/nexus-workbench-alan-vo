@@ -64,3 +64,14 @@ export interface AnalysisUpdate {
   result_data?: string;
   error_message?: string;
 }
+
+export interface AnalysisRunResponse {
+  analysis_id: number;
+  status: AnalysisStatus;
+  functions_count: number;
+  vtables_count: number;
+  switches_count: number;
+  jmp_calls_count: number;
+  strings_count: number;
+  cross_references_count: number;
+}
