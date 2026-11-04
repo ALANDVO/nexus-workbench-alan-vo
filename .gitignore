@@ -47,3 +47,14 @@ Thumbs.db
 htmlcov/
 .coverage
 coverage.xml
+.turbo/
+.env.*.local
+**/data/media/
+venv/
+*.pyc
+*.db-wal
+*.db-shm
+*.sqlite-wal
+*.sqlite-shm
+*.sqlite3-wal
+*.sqlite3-shm
