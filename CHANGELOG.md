@@ -50,3 +50,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - JMP+PUSH call recovery (Ghidra #5747)
 - Cross-segment string recovery (Ghidra #4865)
 - Scalable batch decompilation (Ghidra #2791)
+
+---
+
+Alan Vo · [alanvo.net](https://alanvo.net)

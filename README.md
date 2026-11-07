@@ -325,3 +325,7 @@ MIT License - Copyright (c) 2025 Alan Vo <alanvo@gmail.com>
 Alan Vo - alanvo@gmail.com
 
 Project: https://github.com/ALANDVO/nexus-workbench-alan-vo
+
+---
+
+Alan Vo · [alanvo.net](https://alanvo.net)

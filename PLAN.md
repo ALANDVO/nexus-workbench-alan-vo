@@ -98,3 +98,6 @@ Acceptance:
 - Shared analysis cache across workers
 - Benchmark shows linear scaling to 16+ cores
 
+---
+
+Alan Vo · [alanvo.net](https://alanvo.net)
