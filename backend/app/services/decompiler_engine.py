@@ -313,16 +313,39 @@ class DecompilerEngine:
         )
 
     def _extract_strings(self, text: str) -> list[StringRef]:
-        """Extract string literals from decompiler output."""
-        strings = []
+        """Extract string literals from decompiler output with reference tracking.
+        
+        Deduplicates strings by value and collects all reference locations.
+        """
+        # First pass: collect all string occurrences with their positions
+        occurrences = []
         for match in self.STRING_LITERAL_PATTERN.finditer(text):
             value = match.group(1)
             if len(value) >= 4:  # Filter out very short strings
-                strings.append(StringRef(
-                    address=0,
-                    value=value,
-                    segment=".rodata",
-                ))
+                line_num = text[:match.start()].count('\n') + 1
+                occurrences.append((value, match.start(), line_num))
+        
+        # Deduplicate by value, keeping the first occurrence as primary address
+        # and collecting all line numbers as references
+        string_map = {}
+        for value, address, line_num in occurrences:
+            if value not in string_map:
+                string_map[value] = {
+                    'address': address,
+                    'references': [line_num],
+                }
+            else:
+                string_map[value]['references'].append(line_num)
+        
+        # Create StringRef objects
+        strings = []
+        for value, data in string_map.items():
+            strings.append(StringRef(
+                address=data['address'],
+                value=value,
+                segment=".rodata",
+                references=data['references'],
+            ))
         return strings
 
     def _build_cross_references(self, result: AnalysisResult) -> None:
@@ -350,7 +373,15 @@ class DecompilerEngine:
         # Cross-reference strings
         for string_ref in result.strings:
             key = f"string_{string_ref.address}"
-            result.cross_references[key] = []
+            # Find additional references to this string in function bodies
+            func_body_refs = []
+            for func in result.functions:
+                for match in re.finditer(re.escape(string_ref.value), func.body):
+                    line_num = func.body[:match.start()].count('\n') + 1
+                    if line_num not in string_ref.references:
+                        string_ref.references.append(line_num)
+                    func_body_refs.append(line_num)
+            result.cross_references[key] = func_body_refs
 
 
 def create_decompiler_engine() -> DecompilerEngine:
