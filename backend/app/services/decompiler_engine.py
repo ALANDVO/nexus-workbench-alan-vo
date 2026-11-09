@@ -181,11 +181,15 @@ class DecompilerEngine:
 
     def _resolve_vtable_calls(self, result: AnalysisResult) -> None:
         """Resolve indirect vtable calls to concrete functions."""
-        # Build vtable lookup
-        vtable_map = {}
+        # Build vtable lookup by name and offset
+        vtable_by_name = {}
+        vtable_by_offset = {}
         for vtable in result.vtables:
             for offset, func_name in vtable.functions:
-                vtable_map[(vtable.name, offset)] = func_name
+                vtable_by_name[(vtable.name, offset)] = func_name
+                if offset not in vtable_by_offset:
+                    vtable_by_offset[offset] = []
+                vtable_by_offset[offset].append((vtable.name, func_name))
         
         # Find and resolve vtable calls in function bodies
         for func in result.functions:
@@ -194,12 +198,36 @@ class DecompilerEngine:
                 index = int(index_str)
                 offset = index * 8  # x64 pointer size
                 
-                # Try to resolve
+                # Extract base variable name from vtable expression (e.g., "base" from "base->vtable[1]")
+                base_var_match = re.match(r'([a-zA-Z_][a-zA-Z0-9_]*)\s*->\s*vtable', vtable_expr)
+                base_var = base_var_match.group(1) if base_var_match else None
+                
+                # Try to resolve by matching vtable name with base variable
                 target_name = None
-                for (vname, voffset), fname in vtable_map.items():
-                    if voffset == offset:
-                        target_name = fname
-                        break
+                confidence = 0.7  # Default confidence
+                
+                if base_var:
+                    # Try exact name match first (e.g., base -> BaseClass_vtable)
+                    for vtable_name in [v.name for v in result.vtables]:
+                        # Heuristic: variable name matches class name prefix
+                        if vtable_name.lower().startswith(base_var.lower() + '_') or \
+                           vtable_name.lower().startswith(base_var.lower()) or \
+                           base_var.lower() in vtable_name.lower().split('_'):
+                            if (vtable_name, offset) in vtable_by_name:
+                                target_name = vtable_by_name[(vtable_name, offset)]
+                                confidence = 0.9
+                                break
+                
+                # Fallback: match by offset only (original behavior)
+                if not target_name and offset in vtable_by_offset:
+                    candidates = vtable_by_offset[offset]
+                    if len(candidates) == 1:
+                        target_name = candidates[0][1]
+                        confidence = 0.8
+                    else:
+                        # Multiple vtables at same offset - pick first with warning
+                        target_name = candidates[0][1]
+                        confidence = 0.5
                 
                 if target_name:
                     call = CallSite(
@@ -208,7 +236,7 @@ class DecompilerEngine:
                         target=target_name,
                         target_address=offset,
                         call_type="vtable",
-                        confidence=0.9,
+                        confidence=confidence,
                         raw_text=f"(*{vtable_expr})("
                     )
                     func.calls.append(call)

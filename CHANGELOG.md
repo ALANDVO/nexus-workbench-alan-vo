@@ -1,9 +1,15 @@
 # Changelog
 
+## 1.4.0 — work-in-progress checkpoint
+
+Partial code published for continued development. Known issues: STATUS.md.
+
 ## 1.3.0 — work-in-progress checkpoint
 
 Partial code published for continued development. Known issues: STATUS.md.
 
+### Fixed
+- VTable call resolution: correctly handles multiple vtables at the same offset by matching the base variable name (e.g., `base->vtable[1]` matches `BaseClass_vtable`) instead of only matching by offset. Added test case `test_resolve_vtable_calls_multiple_vtables`.
 ## 1.2.0 — work-in-progress checkpoint
 
 Partial code published for continued development. Known issues: STATUS.md.
