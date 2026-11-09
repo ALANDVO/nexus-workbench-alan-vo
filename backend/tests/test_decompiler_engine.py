@@ -60,6 +60,41 @@ class TestDecompilerEngine:
                 if call.call_type == "vtable":
                     assert call.target == "MyClass::func2"
                     return
+    def test_resolve_vtable_calls_multiple_vtables(self, engine):
+        """Test vtable call resolution with multiple vtables at same offset."""
+        text = """
+        BaseClass_vtable[] = {
+            &BaseClass::func1,
+            &BaseClass::func2,
+        };
+
+        DerivedClass_vtable[] = {
+            &DerivedClass::funcA,
+            &DerivedClass::funcB,
+        };
+
+        void test() {
+            (*base->vtable[1])(arg);   // Should resolve to BaseClass::func2
+            (*derived->vtable[1])(arg); // Should resolve to DerivedClass::funcB
+        }
+        """
+        result = engine.analyze(text)
+        vtable_calls = []
+        for func in result.functions:
+            for call in func.calls:
+                if call.call_type == "vtable":
+                    vtable_calls.append(call)
+        
+        assert len(vtable_calls) == 2
+        # Check first call resolves to BaseClass::func2
+        call1 = next(c for c in vtable_calls if "base" in c.raw_text)
+        assert call1.target == "BaseClass::func2"
+        assert call1.confidence == 0.9
+        
+        # Check second call resolves to DerivedClass::funcB
+        call2 = next(c for c in vtable_calls if "derived" in c.raw_text)
+        assert call2.target == "DerivedClass::funcB"
+        assert call2.confidence == 0.9
 
     def test_detect_jmp_push_calls(self, engine):
         text = """
