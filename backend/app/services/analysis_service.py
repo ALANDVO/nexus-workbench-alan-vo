@@ -12,6 +12,11 @@ from app.services.decompiler_engine import (
     AnalysisResult,
     DecompilerEngine,
     create_decompiler_engine,
+    Function,
+    VTable,
+    SwitchStatement,
+    CallSite,
+    StringRef,
 )
 
 
@@ -56,7 +61,13 @@ class AnalysisService:
                     {
                         "name": v.name,
                         "address": v.address,
-                        "functions_count": len(v.functions),
+                        "functions": [
+                            {
+                                "offset": offset,
+                                "name": func_name,
+                            }
+                            for offset, func_name in v.functions
+                        ],
                     }
                     for v in result.vtables
                 ],
@@ -118,6 +129,74 @@ class AnalysisService:
         
         data = json.loads(analysis.result_data)
         result_obj = AnalysisResult()
+
+        # Rebuild AnalysisResult from stored JSON
+        # Functions
+        for f_data in data.get("functions", []):
+            result_obj.functions.append(
+                Function(
+                    name=f_data["name"],
+                    address=f_data["address"],
+                    signature=f_data["signature"],
+                    body="",
+                    calls=[],
+                    strings=[],
+                )
+            )
+
+        # VTables
+        for v_data in data.get("vtables", []):
+            vfuncs = v_data.get('functions', [])
+            parsed_funcs = [
+                (f['offset'], f['name']) for f in vfuncs
+            ] if vfuncs else []
+            result_obj.vtables.append(
+                VTable(
+                    name=v_data['name'],
+                    address=v_data['address'],
+                    functions=parsed_funcs,
+                )
+            )
+
+        # Switch statements
+        for s_data in data.get("switches", []):
+            switch = SwitchStatement(
+                address=s_data["address"],
+                variable=s_data["variable"],
+                cases=[],
+                default_target=s_data.get("default_target") if s_data.get("has_default") else None,
+                default_name=None,
+            )
+            result_obj.switches.append(switch)
+
+        # JMP calls
+        for c_data in data.get("jmp_calls", []):
+            result_obj.jmp_calls.append(
+                CallSite(
+                    address=0,
+                    caller=c_data["caller"],
+                    target=c_data["target"],
+                    target_address=c_data["target_address"],
+                    call_type="unknown",
+                    confidence=c_data["confidence"],
+                    raw_text="",
+                )
+            )
+
+        # Strings
+        for s_data in data.get("strings", []):
+            result_obj.strings.append(
+                StringRef(
+                    address=s_data["address"],
+                    value=s_data["value"],
+                    segment=s_data["segment"],
+                    references=[],
+                )
+            )
+
+        # Cross-references (directly from JSON)
+        if "cross_references" in data:
+            result_obj.cross_references = data["cross_references"]
         return result_obj
 
 
