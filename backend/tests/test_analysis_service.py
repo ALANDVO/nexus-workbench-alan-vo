@@ -87,5 +87,45 @@ class TestAnalysisService:
         assert analysis.status == AnalysisStatus.COMPLETED
 
 
-if __name__ == "__main__":
-    pytest.main([__file__, "-v"])
+
+    @pytest.mark.asyncio
+    async def test_get_analysis_result(self, service: AnalysisService, db_session: AsyncSession, test_user: User):
+        analysis = Analysis(
+            user_id=test_user.id,
+            name='Test Get Result',
+            analysis_type=AnalysisType.VTABLE_RESOLUTION,
+            input_data="""MyClass_vtable[] = {
+                &MyClass::func1,
+                &MyClass::func2,
+            };
+            void bar() {
+                (*this->vtable[1])(local_20);
+            }""",
+            status=AnalysisStatus.PENDING,
+        )
+        db_session.add(analysis)
+        await db_session.commit()
+        await db_session.refresh(analysis)
+
+        # Run the analysis to generate result_data
+        result = await service.run_analysis(db_session, analysis)
+        
+        # Now retrieve it via get_analysis_result
+        retrieved = await service.get_analysis_result(db_session, analysis.id)
+        assert retrieved is not None
+        # Should have at least one function from the analysis (bar)
+        assert len(retrieved.functions) >= 1
+        # The function names should include bar
+        func_names = {f.name for f in retrieved.functions}
+        assert 'bar' in func_names
+        # VTables should be present and contain the vtable functions
+        assert len(retrieved.vtables) >= 1
+        # VTable name
+        vtable_names = {v.name for v in retrieved.vtables}
+        assert 'MyClass_vtable' in vtable_names
+        # VTable should contain func1 and func2 (stored as (offset, name) tuples)
+        vtable_func_names = {f[1] for f in retrieved.vtables[0].functions}
+        assert 'MyClass::func1' in vtable_func_names
+        assert 'MyClass::func2' in vtable_func_names
+        # Cross references dict may be present
+        assert isinstance(retrieved.cross_references, dict)
