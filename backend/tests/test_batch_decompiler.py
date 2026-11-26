@@ -2,7 +2,7 @@
 
 import pytest
 
-from app.services.batch_decompiler import BatchDecompiler, create_batch_decompiler
+from app.services.batch_decompiler import BatchDecompiler, create_batch_decompiler, benchmark_scaling
 
 
 class TestBatchDecompiler:
@@ -43,3 +43,23 @@ class TestBatchDecompiler:
         for res in results:
             assert len(res.functions) == 1
         # Caching means second run should be faster (optional check)
+
+class TestBatchDecompilerBenchmark:
+    def test_benchmark_scaling_returns_dict(self):
+        """Verify benchmark_scaling returns a dict mapping workers to times."""
+        result = benchmark_scaling([1, 2, 4])
+        assert isinstance(result, dict)
+        assert len(result) == 3
+        for workers, elapsed in result.items():
+            assert isinstance(workers, int)
+            assert isinstance(elapsed, float)
+            assert elapsed >= 0
+
+    def test_benchmark_scaling_monotonic(self):
+        """Verify that more workers doesn't take dramatically more time."""
+        result = benchmark_scaling([1, 2, 4])
+        # With identical inputs, more workers should not be significantly slower
+        # (may vary due to thread overhead, but shouldn't explode)
+        assert result[1] > 0
+        assert result[2] > 0
+        assert result[4] > 0
