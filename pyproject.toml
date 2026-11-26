@@ -1,6 +1,6 @@
 [project]
 name = "nexus-workbench"
-version = "1.6.0"
+version = "1.7.0"
 description = "AI-assisted reverse engineering workbench for decompiler analysis"
 readme = "README.md"
 license = {text = "MIT"}
